@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block title %}Catálogo — StreamFlix{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="h3 mb-0">Catálogo de vídeos</h1>
+</div>
+
+{# ================= FILTRO POR CATEGORIA ================= #}
+<ul class="nav nav-pills mb-4 gap-2">
+  <li class="nav-item">
+    <a class="nav-link {{ 'active bg-danger' if not categoria_atual else 'text-danger' }}"
+       href="{{ url_for('cliente.catalogo') }}">Todos</a>
+  </li>
+  {% for categoria in categorias %}
+    <li class="nav-item">
+      <a class="nav-link {{ 'active bg-danger' if categoria == categoria_atual else 'text-danger' }}"
+         href="{{ url_for('cliente.catalogo', categoria=categoria) }}">{{ categoria }}</a>
+    </li>
+  {% endfor %}
+</ul>
+
+{# ================= GRID DE VÍDEOS ================= #}
+{% if videos %}
+  <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+    {% for video in videos %}
+      <div class="col">
+        <div class="card h-100 border-0 shadow-sm">
+          <div class="ratio ratio-16x9 bg-dark">
+            {% if video.capa %}
+              <img src="{{ video.capa }}" class="object-fit-cover" alt="{{ video.titulo }}">
+            {% else %}
+              <div class="d-flex align-items-center justify-content-center text-white-50">
+                <span class="display-6">▶</span>
+              </div>
+            {% endif %}
+          </div>
+          <div class="card-body">
+            <span class="badge text-bg-danger mb-2">{{ video.categoria }}</span>
+            <h2 class="h6 card-title mb-1">{{ video.titulo }}</h2>
+            <p class="small text-muted mb-0">
+              {% if video.duracao %}{{ video.duracao }}{% endif %}
+              {% if video.ano_lancamento %}{{ ' · ' if video.duracao }} {{ video.ano_lancamento }}{% endif %}
+            </p>
+          </div>
+          <div class="card-footer bg-white border-0 pb-3">
+            <a href="{{ url_for('cliente.assistir', video_id=video.id) }}"
+               class="btn btn-sm btn-danger w-100">Assistir agora</a>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="card border-0 shadow-sm">
+    <div class="card-body text-center text-muted py-5">
+      <p class="h5 mb-1">Nenhum vídeo disponível nesta categoria.</p>
+      <small>Volte em breve — novos títulos serão adicionados.</small>
+    </div>
+  </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block title %}Vídeos — StreamFlix{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="h3 mb-0">Catálogo de vídeos</h1>
+  <a href="{{ url_for('admin.novo_video') }}" class="btn btn-danger">+ Novo vídeo</a>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>ID</th>
+          <th>Título</th>
+          <th>Categoria</th>
+          <th>Arquivo</th>
+          <th>Duração</th>
+          <th>Status</th>
+          <th class="text-end">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for video in videos %}
+          <tr>
+            <td>{{ video.id }}</td>
+            <td>{{ video.titulo }}</td>
+            <td><span class="badge text-bg-danger">{{ video.categoria }}</span></td>
+            <td><code class="small">{{ video.caminho_arquivo }}</code></td>
+            <td>{{ video.duracao or '—' }}</td>
+            <td>
+              {% if video.ativo %}
+                <span class="badge text-bg-success">Disponível</span>
+              {% else %}
+                <span class="badge text-bg-secondary">Oculto</span>
+              {% endif %}
+            </td>
+            <td class="text-end">
+              <a href="{{ url_for('admin.editar_video', video_id=video.id) }}"
+                 class="btn btn-sm btn-outline-primary">Editar</a>
+              <form method="post" action="{{ url_for('admin.excluir_video', video_id=video.id) }}"
+                    class="d-inline"
+                    onsubmit="return confirm('Excluir o vídeo &quot;{{ video.titulo }}&quot;?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-sm btn-outline-danger">Excluir</button>
+              </form>
+            </td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="7" class="text-center text-muted py-4">
+              Nenhum vídeo cadastrado. Clique em <strong>+ Novo vídeo</strong> para começar.
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

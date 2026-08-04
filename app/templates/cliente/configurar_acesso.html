@@ -1,0 +1,87 @@
+﻿{% extends 'base.html' %}
+
+{% block title %}Complete seu cadastro â€” StreamFlix{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-7 col-lg-5">
+    <div class="alert alert-warning">
+      <strong>Primeiro acesso!</strong> VocÃª entrou com a senha provisÃ³ria. Para seguranÃ§a,
+      defina sua prÃ³pria senha e complete seus dados de pagamento.
+    </div>
+
+    <div class="card shadow-sm border-0">
+      <div class="card-body p-4">
+        <h1 class="h4 text-center mb-4">Complete seu cadastro</h1>
+
+        <form method="post" novalidate>
+          {{ form.hidden_tag() }}
+
+          <h2 class="h6 text-uppercase text-danger fw-bold mb-3">Nova senha</h2>
+          <div class="mb-3">
+            {{ form.senha.label(class='form-label') }}
+            {{ form.senha(class='form-control' + (' is-invalid' if form.senha.errors else ''), placeholder='MÃ­nimo de 8 caracteres', autofocus=true) }}
+            {% for erro in form.senha.errors %}<div class="invalid-feedback">{{ erro }}</div>{% endfor %}
+          </div>
+
+          <div class="mb-3">
+            {{ form.confirmar_senha.label(class='form-label') }}
+            {{ form.confirmar_senha(class='form-control' + (' is-invalid' if form.confirmar_senha.errors else ''), placeholder='Repita a nova senha') }}
+            {% for erro in form.confirmar_senha.errors %}<div class="invalid-feedback">{{ erro }}</div>{% endfor %}
+          </div>
+
+          <hr class="my-4">
+
+          <h2 class="h6 text-uppercase text-danger fw-bold mb-3">Dados pessoais</h2>
+          <div class="mb-3">
+            {{ form.cpf.label(class='form-label') }}
+            {{ form.cpf(class='form-control' + (' is-invalid' if form.cpf.errors else ''), placeholder='000.000.000-00') }}
+            {% for erro in form.cpf.errors %}<div class="invalid-feedback">{{ erro }}</div>{% endfor %}
+          </div>
+
+          <hr class="my-4">
+
+          <h2 class="h6 text-uppercase text-danger fw-bold mb-3">Forma de pagamento</h2>
+          <div class="mb-3">
+            {{ form.cartao_numero.label(class='form-label') }}
+            {{ form.cartao_numero(class='form-control' + (' is-invalid' if form.cartao_numero.errors else ''), placeholder='NÃºmero do cartÃ£o', inputmode='numeric') }}
+            {% for erro in form.cartao_numero.errors %}<div class="invalid-feedback">{{ erro }}</div>{% endfor %}
+            <div class="form-text">Apenas os 4 Ãºltimos dÃ­gitos sÃ£o armazenados (seguranÃ§a).</div>
+          </div>
+
+          <div class="mb-3">
+            {{ form.cartao_nome.label(class='form-label') }}
+            {{ form.cartao_nome(class='form-control' + (' is-invalid' if form.cartao_nome.errors else ''), placeholder='Nome impresso no cartÃ£o') }}
+            {% for erro in form.cartao_nome.errors %}<div class="invalid-feedback">{{ erro }}</div>{% endfor %}
+          </div>
+
+          <div class="row">
+            <div class="col-5 mb-3">
+              {{ form.cartao_validade_mes.label(class='form-label') }}
+              <select class="form-select {{ 'is-invalid' if form.cartao_validade_mes.errors else '' }}"
+                      name="{{ form.cartao_validade_mes.name }}" id="{{ form.cartao_validade_mes.id }}">
+                {% for value, label in form.cartao_validade_mes.choices %}
+                  <option value="{{ value }}" {% if form.cartao_validade_mes.data == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-5 mb-3">
+              {{ form.cartao_validade_ano.label(class='form-label') }}
+              <select class="form-select {{ 'is-invalid' if form.cartao_validade_mes.errors else '' }}"
+                      name="{{ form.cartao_validade_ano.name }}" id="{{ form.cartao_validade_ano.id }}">
+                {% for value, label in form.cartao_validade_ano.choices %}
+                  <option value="{{ value }}" {% if form.cartao_validade_ano.data == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          {% for erro in form.cartao_validade_mes.errors %}<div class="invalid-feedback d-block mb-2">{{ erro }}</div>{% endfor %}
+
+          {{ form.submit(class='btn btn-danger w-100') }}
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

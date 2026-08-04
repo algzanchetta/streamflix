@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block title %}Painel Admin — StreamFlix{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="h3 mb-0">Painel Administrativo</h1>
+  <div>
+    <a href="{{ url_for('admin.listar_videos') }}" class="btn btn-outline-danger btn-sm">Gerenciar vídeos</a>
+    <span class="badge bg-danger ms-2">Admin</span>
+  </div>
+</div>
+
+{# ================= CARDS DE MÉTRICAS ================= #}
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-lg-3">
+    <div class="card border-0 shadow-sm text-bg-danger">
+      <div class="card-body">
+        <div class="text-uppercase small opacity-75">Total de Clientes</div>
+        <div class="display-6 fw-bold">{{ total_clientes }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="card border-0 shadow-sm text-bg-dark">
+      <div class="card-body">
+        <div class="text-uppercase small opacity-75">Faturamento Total</div>
+        <div class="display-6 fw-bold">R$ {{ '%.2f'|format(faturamento_total) }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="card border-0 shadow-sm text-bg-success">
+      <div class="card-body">
+        <div class="text-uppercase small opacity-75">Assinaturas Ativas</div>
+        <div class="display-6 fw-bold">{{ assinaturas_ativas }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="card border-0 shadow-sm text-bg-secondary">
+      <div class="card-body">
+        <div class="text-uppercase small opacity-75">Total de Pagamentos</div>
+        <div class="display-6 fw-bold">{{ total_pagamentos }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# ================= ÚLTIMOS CLIENTES ================= #}
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-white">Últimos clientes cadastrados</div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>ID</th>
+          <th>Nome</th>
+          <th>E-mail</th>
+          <th>Cidade</th>
+          <th>Cadastro</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for cliente in ultimos_clientes %}
+          <tr>
+            <td>{{ cliente.id_cliente }}</td>
+            <td>{{ cliente.nome }}</td>
+            <td>{{ cliente.email }}</td>
+            <td>{{ cliente.cidade }}</td>
+            <td>{{ cliente.data_cadastro.strftime('%d/%m/%Y') if cliente.data_cadastro else '—' }}</td>
+            <td>
+              {% if cliente.ativo %}
+                <span class="badge text-bg-success">Ativo</span>
+              {% else %}
+                <span class="badge text-bg-secondary">Inativo</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% else %}
+          <tr><td colspan="6" class="text-center text-muted py-4">Nenhum cliente cadastrado.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

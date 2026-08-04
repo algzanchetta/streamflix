@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}Entrar — StreamFlix{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6 col-lg-4">
+    <div class="card shadow-sm border-0">
+      <div class="card-body p-4">
+        <h1 class="h4 text-center mb-1">Bem-vindo(a) de volta</h1>
+        <p class="text-muted text-center small mb-4">Acesse sua conta para continuar.</p>
+
+        <form method="post" novalidate>
+          {{ form.hidden_tag() }}
+
+          <div class="mb-3">
+            {{ form.email.label(class='form-label') }}
+            {{ form.email(class='form-control' + (' is-invalid' if form.email.errors else ''), placeholder='voce@exemplo.com', autofocus=true) }}
+            {% for erro in form.email.errors %}
+              <div class="invalid-feedback">{{ erro }}</div>
+            {% endfor %}
+          </div>
+
+          <div class="mb-3">
+            {{ form.senha.label(class='form-label') }}
+            {{ form.senha(class='form-control' + (' is-invalid' if form.senha.errors else ''), placeholder='Sua senha') }}
+            {% for erro in form.senha.errors %}
+              <div class="invalid-feedback">{{ erro }}</div>
+            {% endfor %}
+          </div>
+
+          <div class="mb-3 form-check">
+            {{ form.lembrar(class='form-check-input') }}
+            {{ form.lembrar.label(class='form-check-label') }}
+          </div>
+
+          {{ form.submit(class='btn btn-danger w-100') }}
+        </form>
+
+        <hr class="my-4">
+        <p class="small text-center mb-0">
+          Ainda não tem conta? <a href="{{ url_for('auth.registro') }}">Criar conta</a><br>
+          <a href="{{ url_for('auth.recuperar_senha') }}">Esqueci minha senha</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

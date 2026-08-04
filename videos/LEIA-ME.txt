@@ -1,0 +1,2 @@
+Coloque aqui os arquivos de vídeo do catálogo (.mp4, .webm).
+Depois cadastre-os pelo Painel Admin -> Vídeos.

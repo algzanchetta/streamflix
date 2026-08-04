@@ -1,0 +1,134 @@
+﻿{% extends 'base.html' %}
+
+{% block title %}Criar conta â€” StreamFlix{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8 col-lg-6">
+    <div class="card shadow-sm border-0">
+      <div class="card-body p-4">
+        <h1 class="h4 text-center mb-1">Crie sua conta</h1>
+        <p class="text-muted text-center small mb-4">Cadastro completo: dados, plano e forma de pagamento.</p>
+
+        <form method="post" novalidate>
+          {{ form.hidden_tag() }}
+
+          <h2 class="h6 text-uppercase text-danger fw-bold mb-3">Dados pessoais</h2>
+          <div class="mb-3">
+            {{ form.nome.label(class='form-label') }}
+            {{ form.nome(class='form-control' + (' is-invalid' if form.nome.errors else ''), placeholder='Seu nome completo') }}
+            {% for erro in form.nome.errors %}<div class="invalid-feedback">{{ erro }}</div>{% endfor %}
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              {{ form.email.label(class='form-label') }}
+              {{ form.email(class='form-control' + (' is-invalid' if form.email.errors else ''), placeholder='voce@exemplo.com') }}
+              {% for erro in form.email.errors %}<div class="invalid-feedback">{{ erro }}</div>{% endfor %}
+            </div>
+            <div class="col-md-6 mb-3">
+              {{ form.cpf.label(class='form-label') }}
+              {{ form.cpf(class='form-control' + (' is-invalid' if form.cpf.errors else ''), placeholder='000.000.000-00') }}
+              {% for erro in form.cpf.errors %}<div class="invalid-feedback">{{ erro }}</div>{% endfor %}
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-6 mb-3">
+              {{ form.idade.label(class='form-label') }}
+              {{ form.idade(class='form-control' + (' is-invalid' if form.idade.errors else ''), placeholder='Ex.: 25') }}
+              {% for erro in form.idade.errors %}<div class="invalid-feedback">{{ erro }}</div>{% endfor %}
+            </div>
+            <div class="col-6 mb-3">
+              {{ form.cidade.label(class='form-label') }}
+              {{ form.cidade(class='form-control' + (' is-invalid' if form.cidade.errors else ''), placeholder='Sua cidade') }}
+              {% for erro in form.cidade.errors %}<div class="invalid-feedback">{{ erro }}</div>{% endfor %}
+            </div>
+          </div>
+
+          <div class="mb-3">
+            {{ form.senha.label(class='form-label') }}
+            {{ form.senha(class='form-control' + (' is-invalid' if form.senha.errors else ''), placeholder='MÃ­nimo de 8 caracteres') }}
+            {% for erro in form.senha.errors %}<div class="invalid-feedback">{{ erro }}</div>{% endfor %}
+          </div>
+
+          <div class="mb-3">
+            {{ form.confirmar_senha.label(class='form-label') }}
+            {{ form.confirmar_senha(class='form-control' + (' is-invalid' if form.confirmar_senha.errors else ''), placeholder='Repita a senha') }}
+            {% for erro in form.confirmar_senha.errors %}<div class="invalid-feedback">{{ erro }}</div>{% endfor %}
+          </div>
+
+          <hr class="my-4">
+
+          <h2 class="h6 text-uppercase text-danger fw-bold mb-3">Escolha seu plano</h2>
+          <div class="mb-3">
+            {{ form.plano_id.label(class='form-label') }}
+            <select class="form-select {{ 'is-invalid' if form.plano_id.errors else '' }}"
+                    name="{{ form.plano_id.name }}" id="{{ form.plano_id.id }}">
+              {% for value, label in form.plano_id.choices %}
+                <option value="{{ value }}" {% if form.plano_id.data == value %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+            {% for erro in form.plano_id.errors %}<div class="invalid-feedback">{{ erro }}</div>{% endfor %}
+            {% if not planos %}
+              <div class="form-text text-danger">Nenhum plano disponÃ­vel no momento.</div>
+            {% endif %}
+          </div>
+
+          <hr class="my-4">
+
+          <h2 class="h6 text-uppercase text-danger fw-bold mb-3">Pagamento</h2>
+          <div class="mb-3">
+            {{ form.cartao_numero.label(class='form-label') }}
+            {{ form.cartao_numero(class='form-control' + (' is-invalid' if form.cartao_numero.errors else ''), placeholder='NÃºmero do cartÃ£o', inputmode='numeric') }}
+            {% for erro in form.cartao_numero.errors %}<div class="invalid-feedback">{{ erro }}</div>{% endfor %}
+            <div class="form-text">Apenas os 4 Ãºltimos dÃ­gitos sÃ£o armazenados (seguranÃ§a).</div>
+          </div>
+
+          <div class="mb-3">
+            {{ form.cartao_nome.label(class='form-label') }}
+            {{ form.cartao_nome(class='form-control' + (' is-invalid' if form.cartao_nome.errors else ''), placeholder='Nome impresso no cartÃ£o') }}
+            {% for erro in form.cartao_nome.errors %}<div class="invalid-feedback">{{ erro }}</div>{% endfor %}
+          </div>
+
+          <div class="row">
+            <div class="col-4 mb-3">
+              {{ form.cartao_validade_mes.label(class='form-label') }}
+              <select class="form-select {{ 'is-invalid' if form.cartao_validade_mes.errors else '' }}"
+                      name="{{ form.cartao_validade_mes.name }}" id="{{ form.cartao_validade_mes.id }}">
+                {% for value, label in form.cartao_validade_mes.choices %}
+                  <option value="{{ value }}" {% if form.cartao_validade_mes.data == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-4 mb-3">
+              {{ form.cartao_validade_ano.label(class='form-label') }}
+              <select class="form-select {{ 'is-invalid' if form.cartao_validade_mes.errors else '' }}"
+                      name="{{ form.cartao_validade_ano.name }}" id="{{ form.cartao_validade_ano.id }}">
+                {% for value, label in form.cartao_validade_ano.choices %}
+                  <option value="{{ value }}" {% if form.cartao_validade_ano.data == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-4 mb-3 d-flex align-items-end">
+              <div class="w-100">
+                <div class="form-label text-muted small mb-1">Validade</div>
+                <div class="border rounded py-2 px-3 text-muted small">MM/AAAA</div>
+              </div>
+            </div>
+          </div>
+          {% for erro in form.cartao_validade_mes.errors %}<div class="invalid-feedback d-block mb-2">{{ erro }}</div>{% endfor %}
+
+          {{ form.submit(class='btn btn-danger w-100') }}
+        </form>
+
+        <hr class="my-4">
+        <p class="small text-center mb-0">
+          JÃ¡ tem conta? <a href="{{ url_for('auth.login') }}">Entrar</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
