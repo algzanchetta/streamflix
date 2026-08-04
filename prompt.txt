@@ -1,0 +1,33 @@
+Aja como um Arquiteto de Software Sênior especialista em Python, Flask e Desenvolvimento Web. 
+
+Estou continuando um projeto chamado "StreamFlix" (um sistema de gestão para empresa de streaming). 
+Na Aula 01, eu já configurei o ambiente, criei o `config.py`, o `run.py` e o `app/__init__.py` (usando Application Factory). 
+Agora, na Aula 02, preciso que você gere a estrutura completa do projeto usando Blueprints, SQLAlchemy ORM e Flask-Login, para que eu possa revisar e integrar o código.
+
+O banco de dados SQLite (`dbase.db`) já existe e possui as seguintes tabelas (use exatamente estes nomes de colunas nos Models):
+1. `clientes`: id_cliente (PK), nome, email (unique), idade, cidade, senha_hash, ultimo_acesso, data_cadastro, ativo.
+2. `assinaturas`: id_assinaturas (PK), id_cliente (FK clientes.id_cliente), plano, valor, status.
+3. `pagamentos`: id_pagamento (PK), id_assinaturas (FK assinaturas.id_assinaturas), data_pagamento, valor, metodo_pagamento.
+4. `usuarios_sistema`: id (PK), email (unique), senha_hash, nome, cargo, permissoes, ativo, ultimo_login, criado_em, atualizado_em.
+
+REGRAS DE ARQUITETURA:
+1. Use Blueprints para separar as rotas: `auth` (login/registro), `cliente` (área do usuário), `admin` (painel administrativo).
+2. Use Flask-Login para autenticação. A classe UsuarioSistema será o UserMixin.
+3. Use Flask-WTF para os formulários (LoginForm, RegistroForm).
+4. O frontend usará Jinja2 e Bootstrap 5. Crie um `base.html` com navbar dinâmica (muda se for admin, cliente ou visitante).
+
+O QUE EU PRECISO QUE VOCÊ GERE AGORA (Passo a Passo):
+Por favor, me forneça o código completo e comentado para os seguintes arquivos, na ordem exata:
+
+PASSO 1: `app/models.py` (Todos os 4 models com relacionamentos db.relationship e métodos de senha do Werkzeug).
+PASSO 2: `app/forms.py` (Formulários de Login e Registro usando Flask-WTF e validadores).
+PASSO 3: `app/auth/routes.py` (Rotas de login, logout, registro e recuperação de senha).
+PASSO 4: `app/admin/routes.py` (Rota de dashboard admin que mostra métricas simples: total de clientes, faturamento).
+PASSO 5: `app/cliente/routes.py` (Rota de dashboard do cliente que mostra sua assinatura atual).
+PASSO 6: `app/templates/base.html` (Template base com Bootstrap 5, navbar e blocos de conteúdo).
+PASSO 7: `app/templates/auth/login.html` e `app/templates/auth/registro.html`.
+
+IMPORTANTE:
+- Não alucine nomes de colunas. Use exatamente o schema fornecido.
+- O código deve ser limpo, seguro (proteção CSRF, hash de senha) e pronto para produção.
+- Explique brevemente a lógica de cada bloco antes de construir, podendo deixar fazer ajustes ou confirmar sua sugestão.
