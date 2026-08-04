@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import paginacao_nav %}
+
+{% block title %}Pagamentos — StreamFlix{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="h3 mb-0">Pagamentos</h1>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('admin.usuarios') }}" class="btn btn-outline-danger btn-sm">Usuários</a>
+    <a href="{{ url_for('admin.listar_videos') }}" class="btn btn-outline-danger btn-sm">Vídeos</a>
+  </div>
+</div>
+
+{# ================= RESUMO ================= #}
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-lg-3">
+    <div class="card border-0 shadow-sm text-bg-success">
+      <div class="card-body">
+        <div class="text-uppercase small opacity-75">Quitados</div>
+        <div class="display-6 fw-bold">{{ total_pagos }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="card border-0 shadow-sm text-bg-warning">
+      <div class="card-body">
+        <div class="text-uppercase small opacity-75">Pendentes</div>
+        <div class="display-6 fw-bold">{{ total_pendentes }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="card border-0 shadow-sm text-bg-dark">
+      <div class="card-body">
+        <div class="text-uppercase small opacity-75">Valor quitado</div>
+        <div class="display-6 fw-bold">R$ {{ '%.2f'|format(total_valor_pago) }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# ================= FILTRO ================= #}
+<ul class="nav nav-pills mb-3 gap-2">
+  <li class="nav-item">
+    <a class="nav-link {{ 'active bg-danger' if not status else 'text-danger' }}"
+       href="{{ url_for('admin.pagamentos') }}">Todos</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link {{ 'active bg-danger' if status == 'pagos' else 'text-danger' }}"
+       href="{{ url_for('admin.pagamentos', status='pagos') }}">Quitados</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link {{ 'active bg-danger' if status == 'pendentes' else 'text-danger' }}"
+       href="{{ url_for('admin.pagamentos', status='pendentes') }}">Pendentes</a>
+  </li>
+</ul>
+
+<div class="card border-0 shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>ID</th>
+          <th>Cliente</th>
+          <th>Plano</th>
+          <th>Valor</th>
+          <th>Método</th>
+          <th>Data</th>
+          <th>Status</th>
+          <th class="text-end">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for pagamento in paginacao.items %}
+          <tr>
+            <td>{{ pagamento.id_pagamento }}</td>
+            <td>
+              <div class="fw-semibold">{{ pagamento.assinatura.cliente.nome }}</div>
+              <small class="text-muted">{{ pagamento.assinatura.cliente.email }}</small>
+            </td>
+            <td>{{ pagamento.assinatura.plano }}</td>
+            <td>R$ {{ '%.2f'|format(pagamento.valor) }}</td>
+            <td><small>{{ pagamento.metodo_pagamento or '—' }}</small></td>
+            <td>{{ pagamento.data_pagamento.strftime('%d/%m/%Y') if pagamento.data_pagamento else '—' }}</td>
+            <td>
+              {% if pagamento.eh_pago %}
+                <span class="badge text-bg-success">Quitado</span>
+              {% else %}
+                <span class="badge text-bg-warning">Pendente</span>
+              {% endif %}
+            </td>
+            <td class="text-end">
+              {% if not pagamento.eh_pago %}
+                <form method="post"
+                      action="{{ url_for('admin.quitar_pagamento', pagamento_id=pagamento.id_pagamento) }}"
+                      class="d-inline"
+                      onsubmit="return confirm('Confirmar quitação do pagamento de R$ {{ '%.2f'|format(pagamento.valor) }}?');">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="btn btn-sm btn-outline-success">Marcar como pago</button>
+                </form>
+              {% else %}
+                <span class="text-muted small">Quitado</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% else %}
+          <tr><td colspan="8" class="text-center text-muted py-4">Nenhum pagamento encontrado.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if paginacao.pages > 1 %}
+    <div class="card-footer bg-white py-3">
+      {{ paginacao_nav(paginacao) }}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

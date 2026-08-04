@@ -7,19 +7,53 @@
   <h1 class="h3 mb-0">Catálogo de vídeos</h1>
 </div>
 
-{# ================= FILTRO POR CATEGORIA ================= #}
-<ul class="nav nav-pills mb-4 gap-2">
+{# ================= BUSCA ================= #}
+<form method="get" class="row g-2 mb-3">
+  <div class="col-md-8">
+    <div class="input-group">
+      <input type="search" name="q" value="{{ q }}" class="form-control"
+             placeholder="Buscar por título ou descrição...">
+      {% if tipo %}<input type="hidden" name="tipo" value="{{ tipo }}">{% endif %}
+      {% if categoria %}<input type="hidden" name="categoria" value="{{ categoria }}">{% endif %}
+      <button class="btn btn-danger">Buscar</button>
+    </div>
+  </div>
+  <div class="col-md-4 text-md-end text-muted small align-self-center">
+    {{ videos|length }} título(s) encontrado(s)
+  </div>
+</form>
+
+{# ================= SEPARAR SHOWS X FILMES ================= #}
+{% if tipos %}
+<ul class="nav nav-pills mb-3 gap-2">
   <li class="nav-item">
-    <a class="nav-link {{ 'active bg-danger' if not categoria_atual else 'text-danger' }}"
-       href="{{ url_for('cliente.catalogo') }}">Todos</a>
+    <a class="nav-link {{ 'active bg-danger' if not tipo_atual else 'text-danger' }}"
+       href="{{ url_for('cliente.catalogo', q=q, categoria=categoria) }}">Todos</a>
   </li>
-  {% for categoria in categorias %}
+  {% for tipo in tipos %}
     <li class="nav-item">
-      <a class="nav-link {{ 'active bg-danger' if categoria == categoria_atual else 'text-danger' }}"
-         href="{{ url_for('cliente.catalogo', categoria=categoria) }}">{{ categoria }}</a>
+      <a class="nav-link {{ 'active bg-danger' if tipo == tipo_atual else 'text-danger' }}"
+         href="{{ url_for('cliente.catalogo', tipo=tipo, q=q, categoria=categoria) }}">{{ tipo }}s</a>
     </li>
   {% endfor %}
 </ul>
+{% endif %}
+
+{# ================= FILTRO POR CATEGORIA ================= #}
+{% if categorias %}
+<ul class="nav nav-pills mb-4 gap-2">
+  <li class="nav-item">
+    <a class="nav-link {{ 'active bg-dark text-white' if not categoria_atual else 'text-dark' }}"
+       href="{{ url_for('cliente.catalogo', q=q, tipo=tipo_atual) }}">Todas as categorias</a>
+  </li>
+  {% for categoria in categorias %}
+    <li class="nav-item">
+      <a class="nav-link {{ 'active bg-dark text-white' if categoria == categoria_atual else 'text-dark' }}"
+         href="{{ url_for('cliente.catalogo', categoria=categoria, q=q, tipo=tipo_atual) }}">{{ categoria }}</a>
+    </li>
+  {% endfor %}
+</ul>
+{% endif %}
 
 {# ================= GRID DE VÍDEOS ================= #}
 {% if videos %}
@@ -27,17 +61,16 @@
     {% for video in videos %}
       <div class="col">
         <div class="card h-100 border-0 shadow-sm">
-          <div class="ratio ratio-16x9 bg-dark">
+          <div class="ratio ratio-16x9 bg-dark d-flex align-items-center justify-content-center text-white-50">
+            <span class="display-6">▶</span>
             {% if video.capa %}
-              <img src="{{ video.capa }}" class="object-fit-cover" alt="{{ video.titulo }}">
-            {% else %}
-              <div class="d-flex align-items-center justify-content-center text-white-50">
-                <span class="display-6">▶</span>
-              </div>
+              <img src="{{ video.capa }}" class="position-absolute top-0 start-0 w-100 h-100 object-fit-cover"
+                   alt="{{ video.titulo }}" referrerpolicy="no-referrer" loading="lazy" onerror="this.remove()">
             {% endif %}
           </div>
           <div class="card-body">
-            <span class="badge text-bg-danger mb-2">{{ video.categoria }}</span>
+            <span class="badge text-bg-danger mb-2">{{ video.tipo }}</span>
+            <span class="badge text-bg-dark mb-2">{{ video.categoria }}</span>
             <h2 class="h6 card-title mb-1">{{ video.titulo }}</h2>
             <p class="small text-muted mb-0">
               {% if video.duracao %}{{ video.duracao }}{% endif %}
@@ -55,8 +88,14 @@
 {% else %}
   <div class="card border-0 shadow-sm">
     <div class="card-body text-center text-muted py-5">
-      <p class="h5 mb-1">Nenhum vídeo disponível nesta categoria.</p>
-      <small>Volte em breve — novos títulos serão adicionados.</small>
+      <p class="h5 mb-1">Nenhum vídeo encontrado.</p>
+      <small>
+        {% if q or tipo_atual or categoria_atual %}
+          Tente ajustar a busca ou os filtros.
+        {% else %}
+          Volte em breve — novos títulos serão adicionados.
+        {% endif %}
+      </small>
     </div>
   </div>
 {% endif %}

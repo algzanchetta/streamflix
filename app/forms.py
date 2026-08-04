@@ -15,7 +15,11 @@ from app.validators import so_digitos, validar_cpf, validar_luhn
 ANOS_VALIDADE = range(datetime.utcnow().year, datetime.utcnow().year + 11)
 MESES_VALIDADE = range(1, 13)
 
-CATEGORIAS_VIDEO = ['Filme', 'Série', 'Documentário', 'Aula', 'Clip', 'Outro']
+TIPOS_VIDEO = ['Filme', 'Show', 'Documentário', 'Outro']
+CATEGORIAS_VIDEO = [
+    'Ação', 'Aventura', 'Animação', 'Comédia', 'Drama', 'Documentário',
+    'Ficção Científica', 'Música', 'Terror', 'Outro',
+]
 
 
 class CartaoMixin:
@@ -147,6 +151,37 @@ class ConfigurarAcessoForm(CartaoMixin, FlaskForm):
             raise ValidationError('Este CPF já está cadastrado para outro cliente.')
 
 
+class ReativarContaForm(CartaoMixin, FlaskForm):
+    """Reativação de conta inativa: senha + CPF + cartão + escolha de plano."""
+
+    senha = PasswordField('Senha', validators=[
+        DataRequired(message='Crie uma senha.'),
+        Length(min=8, message='A senha deve ter no mínimo 8 caracteres.'),
+    ])
+    confirmar_senha = PasswordField('Confirmar senha', validators=[
+        EqualTo('senha', message='As senhas não coincidem.'),
+    ])
+    cpf = StringField('CPF', validators=[
+        DataRequired(message='Informe seu CPF.'),
+    ])
+    plano_id = SelectField('Plano de assinatura', coerce=int, validators=[
+        DataRequired(message='Escolha um plano.'),
+    ])
+    submit = SubmitField('Reativar conta e assinar')
+
+    # Preenchido pela rota com o cliente autenticado (para permitir o próprio CPF)
+    cliente_atual = None
+
+    def validate_cpf(self, field):
+        if not validar_cpf(field.data):
+            raise ValidationError('CPF inválido.')
+        cpf = so_digitos(field.data)
+        existente = Cliente.query.filter_by(cpf=cpf).first()
+        if existente and (self.cliente_atual is None
+                          or existente.id_cliente != self.cliente_atual.id_cliente):
+            raise ValidationError('Este CPF já está cadastrado para outro cliente.')
+
+
 class RecuperarSenhaForm(FlaskForm):
     """Solicita link de recuperação de senha pelo e-mail."""
 
@@ -179,7 +214,10 @@ class VideoForm(FlaskForm):
         Length(max=200),
     ])
     descricao = TextAreaField('Descrição')
-    categoria = SelectField('Categoria',
+    tipo = SelectField('Tipo',
+                       choices=[(t, t) for t in TIPOS_VIDEO],
+                       validators=[DataRequired()])
+    categoria = SelectField('Categoria (gênero)',
                             choices=[(c, c) for c in CATEGORIAS_VIDEO],
                             validators=[DataRequired()])
     caminho_arquivo = StringField('Nome do arquivo de vídeo', validators=[

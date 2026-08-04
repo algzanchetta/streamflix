@@ -6,7 +6,7 @@ from flask_login import current_user, login_required, login_user, logout_user
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 
 from app import db
-from app.forms import LoginForm, RecuperarSenhaForm, RedefinirSenhaForm, RegistroForm
+from app.forms import LoginForm, RecuperarSenhaForm, RedefinirSenhaForm, RegistroForm, ReativarContaForm
 from app.models import Assinatura, Cartao, Cliente, Pagamento, Plano, UsuarioSistema
 from app.validators import detectar_bandeira, so_digitos
 
@@ -62,10 +62,21 @@ def login():
 
         # 2º) Tenta um cliente final
         cliente = Cliente.query.filter_by(email=email).first()
-        if cliente and cliente.ativo:
-            # 2.1) Primeiro acesso: cliente sem senha usa a senha provisória
+        if cliente:
+            # 2.1) Cliente inativo — oferecer reativação se a senha bater,
+            #      ou aviso de credencial inválida se a senha não bater
+            if not cliente.ativo:
+                if cliente.check_password(senha):
+                    login_user(cliente, remember=form.lembrar.data, force=True)
+                    flash('Sua conta está inativa. Escolha um plano para reativar.', 'warning')
+                    return redirect(url_for('auth.reativar_conta'))
+                else:
+                    flash('Sua conta está inativa e a senha não confere. '
+                          'Verifique os dados e tente novamente.', 'danger')
+                    return render_template('auth/login.html', form=form)
+            # 2.2) Primeiro acesso: cliente sem senha usa a senha provisória
             #      e é forçado a configurar a conta (trocar senha + CPF + cartão).
-            if cliente.senha_hash is None:
+            elif cliente.senha_hash is None:
                 if senha == _senha_provisoria():
                     cliente.deve_trocar_senha = True
                     cliente.ultimo_acesso = datetime.utcnow()
@@ -73,6 +84,9 @@ def login():
                     login_user(cliente, remember=form.lembrar.data)
                     flash('Primeiro acesso! Defina sua senha e complete seu cadastro.', 'warning')
                     return redirect(url_for('cliente.configurar_acesso'))
+                else:
+                    flash('E-mail ou senha inválidos.', 'danger')
+                    return render_template('auth/login.html', form=form)
             elif cliente.check_password(senha):
                 login_user(cliente, remember=form.lembrar.data)
                 cliente.ultimo_acesso = datetime.utcnow()
@@ -85,8 +99,19 @@ def login():
 
                 destino = _proxima_url_segura(request.args.get('next'))
                 return redirect(destino or _destino_pos_login(cliente))
+            else:
+                flash('E-mail ou senha inválidos.', 'danger')
+                return render_template('auth/login.html', form=form)
 
-        flash('E-mail ou senha inválidos.', 'danger')
+        # 2.3) E-mail não existe em Cliente, verificar se existe em UsuarioSistema
+        usuario = UsuarioSistema.query.filter_by(email=email).first()
+        if usuario:
+            flash('E-mail ou senha inválidos.', 'danger')
+            return render_template('auth/login.html', form=form)
+
+        # 2.4) E-mail não existe em nenhum lugar — sugerir registro
+        flash('E-mail não encontrado. Que tal criar uma conta com este e-mail?', 'info')
+        return redirect(url_for('auth.registro', email=email))
 
     return render_template('auth/login.html', form=form)
 
@@ -118,6 +143,11 @@ def registro():
     form.plano_id.choices = [
         (p.id, f'{p.nome} — R$ {p.preco:.2f}/mês') for p in planos_ativos
     ]
+
+    # Se veio do login ("e-mail não encontrado"), pré-preenche o e-mail
+    email_sugerido = request.args.get('email', '').strip()
+    if email_sugerido and not form.email.data:
+        form.email.data = email_sugerido
 
     if form.validate_on_submit():
         plano = db.session.get(Plano, form.plano_id.data)
@@ -167,6 +197,7 @@ def registro():
             data_pagamento=datetime.utcnow(),
             valor=plano.preco,
             metodo_pagamento=f'{cartao.bandeira} •••• {cartao.numero_final}',
+            status='pago',
         )
         db.session.add(pagamento)
         db.session.commit()
@@ -178,32 +209,87 @@ def registro():
 
 
 # ---------------------------------------------------------------------------
+# Reativação de conta (cliente inativo)
+# ---------------------------------------------------------------------------
+@auth_bp.route('/reativar-conta', methods=['GET', 'POST'])
+def reativar_conta():
+    """Cliente inativo escolhe um plano e é reativado + primeira assinatura."""
+    if not current_user.is_authenticated or not isinstance(current_user, Cliente):
+        return redirect(url_for('auth.login'))
+
+    cliente = current_user
+    if cliente.ativo:
+        flash('Sua conta já está ativa.', 'success')
+        return redirect(url_for('cliente.dashboard'))
+
+    form = ReativarContaForm()
+    planos_ativos = Plano.query.filter_by(ativo=True).order_by(Plano.preco).all()
+    form.plano_id.choices = [
+        (p.id, f'{p.nome} — R$ {p.preco:.2f}/mês') for p in planos_ativos
+    ]
+    form.cliente_atual = cliente
+    # Preenche o CPF se o cliente já tiver um cadastrado
+    if cliente.cpf:
+        form.cpf.data = cliente.cpf
+
+    if form.validate_on_submit():
+        plano = db.session.get(Plano, form.plano_id.data)
+        if not plano or not plano.ativo:
+            flash('Plano inválido. Escolha um plano disponível.', 'danger')
+            return render_template('auth/reativar_conta.html', form=form,
+                                   planos=planos_ativos, cliente=cliente)
+
+        # Reativa o cliente, define a senha (CPF e cartão serão preenchidos depois)
+        cliente.ativo = True
+        cliente.set_password(form.senha.data)
+        cliente.cpf = so_digitos(form.cpf.data)
+        cliente.deve_trocar_senha = False
+        db.session.add(cliente)
+        db.session.flush()
+
+        # Cartão
+        cartao = Cartao(
+            id_cliente=cliente.id_cliente,
+            numero_final=so_digitos(form.cartao_numero.data)[-4:],
+            bandeira=detectar_bandeira(form.cartao_numero.data),
+            nome_titular=form.cartao_nome.data.strip(),
+            validade_mes=form.cartao_validade_mes.data,
+            validade_ano=form.cartao_validade_ano.data,
+            ativo=True,
+        )
+        db.session.add(cartao)
+
+        # Assinatura
+        assinatura = Assinatura(
+            id_cliente=cliente.id_cliente,
+            plano=plano.nome,
+            valor=plano.preco,
+            status='Ativo',
+        )
+        db.session.add(assinatura)
+        db.session.flush()
+
+        # Pagamento
+        pagamento = Pagamento(
+            id_assinaturas=assinatura.id_assinaturas,
+            data_pagamento=datetime.utcnow(),
+            valor=plano.preco,
+            metodo_pagamento=f'{cartao.bandeira} •••• {cartao.numero_final}',
+            status='pago',
+        )
+        db.session.add(pagamento)
+        db.session.commit()
+
+        flash(f'Conta reativada! Plano {plano.nome} ativado. Bem-vindo de volta!', 'success')
+        return redirect(url_for('cliente.dashboard'))
+
+    return render_template('auth/reativar_conta.html', form=form,
+                           planos=planos_ativos, cliente=cliente)
+
+
+# ---------------------------------------------------------------------------
 # Recuperação de senha (token assinado — sem e-mail real nesta aula)
 # ---------------------------------------------------------------------------
-def _serializer():
-    return URLSafeTimedSerializer(
-        current_app_secret_key(), salt='recuperar-senha'
-    )
-
-
-def current_app_secret_key():
-    from flask import current_app
-    return current_app.config['SECRET_KEY']
-
-
-def gerar_token_recuperacao(email):
-    """Gera um token assinado que expira em VALIDADE_TOKEN segundos."""
-    return _serializer().dumps(email)
-
-
-def validar_token_recuperacao(token):
-    """Retorna o e-mail se o token for válido, ou None caso contrário."""
-    try:
-        return _serializer().loads(token, max_age=VALIDADE_TOKEN)
-    except (BadSignature, SignatureExpired):
-        return None
-
-
 @auth_bp.route('/recuperar-senha', methods=['GET', 'POST'])
 def recuperar_senha():
     """Solicita recuperação de senha pelo e-mail.
@@ -251,3 +337,27 @@ def redefinir_senha(token):
         return redirect(url_for('auth.login'))
 
     return render_template('auth/redefinir_senha.html', form=form)
+
+
+def _serializer():
+    return URLSafeTimedSerializer(
+        current_app_secret_key(), salt='recuperar-senha'
+    )
+
+
+def current_app_secret_key():
+    from flask import current_app
+    return current_app.config['SECRET_KEY']
+
+
+def gerar_token_recuperacao(email):
+    """Gera um token assinado que expira em VALIDADE_TOKEN segundos."""
+    return _serializer().dumps(email)
+
+
+def validar_token_recuperacao(token):
+    """Retorna o e-mail se o token for válido, ou None caso contrário."""
+    try:
+        return _serializer().loads(token, max_age=VALIDADE_TOKEN)
+    except (BadSignature, SignatureExpired):
+        return None

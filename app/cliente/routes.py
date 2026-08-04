@@ -3,6 +3,7 @@ import os
 from flask import (Blueprint, abort, current_app, flash, redirect, render_template,
                    request, send_from_directory, url_for)
 from flask_login import current_user, login_required
+from sqlalchemy import or_
 
 from app import db
 from app.forms import ConfigurarAcessoForm
@@ -14,12 +15,17 @@ cliente_bp = Blueprint('cliente', __name__)
 
 @cliente_bp.before_request
 def _verificar_primeiro_acesso():
-    """Força o cliente que ainda não completou o cadastro a concluir primeiro."""
+    """Força o cliente que ainda não completou o cadastro a concluir primeiro.
+       Bloqueia clientes inativos que tentam acessar rotas fora de reativação."""
     if (current_user.is_authenticated
-            and isinstance(current_user, Cliente)
-            and current_user.deve_trocar_senha
-            and request.endpoint != 'cliente.configurar_acesso'):
-        return redirect(url_for('cliente.configurar_acesso'))
+            and isinstance(current_user, Cliente)):
+        # Cliente inativo: só permite a página de reativação do auth_bp
+        if not current_user.ativo and request.endpoint != 'auth.reativar_conta':
+            return redirect(url_for('auth.reativar_conta'))
+        # Cliente que ainda precisa concluir o cadastro é redirecionado
+        if (current_user.deve_trocar_senha
+                and request.endpoint != 'cliente.configurar_acesso'):
+            return redirect(url_for('cliente.configurar_acesso'))
     return None
 
 
@@ -113,13 +119,25 @@ def configurar_acesso():
 @cliente_bp.route('/catalogo')
 @login_required
 def catalogo():
-    """Lista os vídeos disponíveis, com filtro por categoria."""
+    """Lista os vídeos disponíveis com busca e filtros por tipo e categoria."""
+    q = request.args.get('q', '').strip()
+    tipo = request.args.get('tipo', '').strip()
     categoria = request.args.get('categoria', '').strip()
+
     query = Video.query.filter_by(ativo=True)
+    if q:
+        like = f'%{q}%'
+        query = query.filter(or_(Video.titulo.ilike(like), Video.descricao.ilike(like)))
+    if tipo:
+        query = query.filter_by(tipo=tipo)
     if categoria:
         query = query.filter_by(categoria=categoria)
     videos = query.order_by(Video.titulo).all()
 
+    tipos = [
+        t[0] for t in db.session.query(Video.tipo)
+        .filter_by(ativo=True).distinct().order_by(Video.tipo).all()
+    ]
     categorias = [
         c[0] for c in db.session.query(Video.categoria)
         .filter_by(ativo=True).distinct().order_by(Video.categoria).all()
@@ -127,8 +145,11 @@ def catalogo():
     return render_template(
         'cliente/catalogo.html',
         videos=videos,
+        tipos=tipos,
         categorias=categorias,
+        tipo_atual=tipo,
         categoria_atual=categoria,
+        q=q,
     )
 
 

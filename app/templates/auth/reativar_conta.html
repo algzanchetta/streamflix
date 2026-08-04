@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block title %}Reativar conta — StreamFlix{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8 col-lg-6">
+    <div class="card shadow-sm border-0">
+      <div class="card-body p-4">
+        <h1 class="h4 text-center mb-1">Reative sua conta</h1>
+        <p class="text-muted text-center small mb-4">
+          Sua conta está inativa. Escolha um plano para reativar seu acesso.
+        </p>
+
+        <div class="alert alert-info small py-2">
+          <strong>{{ cliente.nome }}</strong> ({{ cliente.email }})
+        </div>
+
+        <form method="post" novalidate>
+          {{ form.hidden_tag() }}
+
+          <h2 class="h6 text-uppercase text-danger fw-bold mb-3">Nova senha</h2>
+          <div class="mb-3">
+            {{ form.senha.label(class='form-label') }}
+            {{ form.senha(class='form-control' + (' is-invalid' if form.senha.errors else ''), placeholder='Mínimo de 8 caracteres') }}
+            {% for erro in form.senha.errors %}<div class="invalid-feedback">{{ erro }}</div>{% endfor %}
+          </div>
+          <div class="mb-3">
+            {{ form.confirmar_senha.label(class='form-label') }}
+            {{ form.confirmar_senha(class='form-control' + (' is-invalid' if form.confirmar_senha.errors else ''), placeholder='Repita a senha') }}
+            {% for erro in form.confirmar_senha.errors %}<div class="invalid-feedback">{{ erro }}</div>{% endfor %}
+          </div>
+
+          <h2 class="h6 text-uppercase text-danger fw-bold mb-3">CPF</h2>
+          <div class="mb-3">
+            {{ form.cpf.label(class='form-label') }}
+            {{ form.cpf(class='form-control' + (' is-invalid' if form.cpf.errors else ''), placeholder='000.000.000-00') }}
+            {% for erro in form.cpf.errors %}<div class="invalid-feedback">{{ erro }}</div>{% endfor %}
+          </div>
+
+          <hr class="my-4">
+
+          <h2 class="h6 text-uppercase text-danger fw-bold mb-3">Escolha seu plano</h2>
+          <div class="mb-3">
+            {{ form.plano_id.label(class='form-label') }}
+            <select class="form-select {{ 'is-invalid' if form.plano_id.errors else '' }}"
+                    name="{{ form.plano_id.name }}" id="{{ form.plano_id.id }}">
+              {% for value, label in form.plano_id.choices %}
+                <option value="{{ value }}" {% if form.plano_id.data == value %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+            {% for erro in form.plano_id.errors %}<div class="invalid-feedback">{{ erro }}</div>{% endfor %}
+          </div>
+
+          <hr class="my-4">
+
+          <h2 class="h6 text-uppercase text-danger fw-bold mb-3">Pagamento</h2>
+          <div class="mb-3">
+            {{ form.cartao_numero.label(class='form-label') }}
+            {{ form.cartao_numero(class='form-control' + (' is-invalid' if form.cartao_numero.errors else ''), placeholder='Número do cartão', inputmode='numeric') }}
+            {% for erro in form.cartao_numero.errors %}<div class="invalid-feedback">{{ erro }}</div>{% endfor %}
+            <div class="form-text">Apenas os 4 últimos dígitos são armazenados (segurança).</div>
+          </div>
+
+          <div class="mb-3">
+            {{ form.cartao_nome.label(class='form-label') }}
+            {{ form.cartao_nome(class='form-control' + (' is-invalid' if form.cartao_nome.errors else ''), placeholder='Nome impresso no cartão') }}
+            {% for erro in form.cartao_nome.errors %}<div class="invalid-feedback">{{ erro }}</div>{% endfor %}
+          </div>
+
+          <div class="row">
+            <div class="col-4 mb-3">
+              {{ form.cartao_validade_mes.label(class='form-label') }}
+              <select class="form-select {{ 'is-invalid' if form.cartao_validade_mes.errors else '' }}"
+                      name="{{ form.cartao_validade_mes.name }}" id="{{ form.cartao_validade_mes.id }}">
+                {% for value, label in form.cartao_validade_mes.choices %}
+                  <option value="{{ value }}" {% if form.cartao_validade_mes.data == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-4 mb-3">
+              {{ form.cartao_validade_ano.label(class='form-label') }}
+              <select class="form-select {{ 'is-invalid' if form.cartao_validade_ano.errors else '' }}"
+                      name="{{ form.cartao_validade_ano.name }}" id="{{ form.cartao_validade_ano.id }}">
+                {% for value, label in form.cartao_validade_ano.choices %}
+                  <option value="{{ value }}" {% if form.cartao_validade_ano.data == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-4 mb-3 d-flex align-items-end">
+              <div class="w-100">
+                <div class="form-label text-muted small mb-1">Validade</div>
+                <div class="border rounded py-2 px-3 text-muted small">MM/AAAA</div>
+              </div>
+            </div>
+            {% for erro in form.cartao_validade_mes.errors %}<div class="invalid-feedback d-block mb-2">{{ erro }}</div>{% endfor %}
+          </div>
+
+          {{ form.submit(class='btn btn-danger w-100') }}
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

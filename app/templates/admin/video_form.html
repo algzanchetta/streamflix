@@ -30,6 +30,16 @@
 
           <div class="row">
             <div class="col-md-6 mb-3">
+              {{ form.tipo.label(class='form-label') }}
+              <select class="form-select {{ 'is-invalid' if form.tipo.errors else '' }}"
+                      name="{{ form.tipo.name }}" id="{{ form.tipo.id }}">
+                {% for value, label in form.tipo.choices %}
+                  <option value="{{ value }}" {% if form.tipo.data == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+              {% for erro in form.tipo.errors %}<div class="invalid-feedback">{{ erro }}</div>{% endfor %}
+            </div>
+            <div class="col-md-6 mb-3">
               {{ form.categoria.label(class='form-label') }}
               <select class="form-select {{ 'is-invalid' if form.categoria.errors else '' }}"
                       name="{{ form.categoria.name }}" id="{{ form.categoria.id }}">
@@ -39,20 +49,15 @@
               </select>
               {% for erro in form.categoria.errors %}<div class="invalid-feedback">{{ erro }}</div>{% endfor %}
             </div>
+          </div>
+
+          <div class="row">
             <div class="col-md-6 mb-3">
               {{ form.ano_lancamento.label(class='form-label') }}
               {{ form.ano_lancamento(class='form-control' + (' is-invalid' if form.ano_lancamento.errors else ''), placeholder='Ex.: 2025') }}
               {% for erro in form.ano_lancamento.errors %}<div class="invalid-feedback">{{ erro }}</div>{% endfor %}
             </div>
-          </div>
-
-          <div class="row">
-            <div class="col-md-8 mb-3">
-              {{ form.caminho_arquivo.label(class='form-label') }}
-              {{ form.caminho_arquivo(class='form-control' + (' is-invalid' if form.caminho_arquivo.errors else ''), placeholder='nome-do-arquivo.mp4') }}
-              {% for erro in form.caminho_arquivo.errors %}<div class="invalid-feedback">{{ erro }}</div>{% endfor %}
-            </div>
-            <div class="col-md-4 mb-3">
+            <div class="col-md-6 mb-3">
               {{ form.duracao.label(class='form-label') }}
               {{ form.duracao(class='form-control' + (' is-invalid' if form.duracao.errors else ''), placeholder='1h 32min') }}
               {% for erro in form.duracao.errors %}<div class="invalid-feedback">{{ erro }}</div>{% endfor %}
@@ -60,9 +65,19 @@
           </div>
 
           <div class="mb-3">
+            {{ form.caminho_arquivo.label(class='form-label') }}
+            {{ form.caminho_arquivo(class='form-control' + (' is-invalid' if form.caminho_arquivo.errors else ''), placeholder='nome-do-arquivo.mp4') }}
+            {% for erro in form.caminho_arquivo.errors %}<div class="invalid-feedback">{{ erro }}</div>{% endfor %}
+          </div>
+
+          <div class="mb-3">
             {{ form.capa.label(class='form-label') }}
             {{ form.capa(class='form-control' + (' is-invalid' if form.capa.errors else ''), placeholder='https://... (opcional)') }}
             {% for erro in form.capa.errors %}<div class="invalid-feedback">{{ erro }}</div>{% endfor %}
+            <div class="form-text">
+              Use o endereço <strong>direto da imagem</strong> (termina em <code>.jpg</code>, <code>.png</code>,
+              <code>.webp</code>). Link de página não é exibido como capa.
+            </div>
           </div>
 
           <div class="mb-4 form-check">

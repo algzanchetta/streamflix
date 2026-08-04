@@ -51,10 +51,25 @@ class Cliente(UserMixin, db.Model):
     def get_id(self):
         return f'cliente:{self.id_cliente}'
 
+    # NOTA: is_active NÃO usa `ativo` porque um cliente inativo ainda precisa
+    # logar para ver a tela de reativação. O bloqueio de rotas é feito via
+    # before_request (cliente_bp) e admin_required. O atributo `ativo` é checado
+    # explicitamente onde for necessário (login, admin, etc.).
     @property
     def is_active(self):
-        """Um cliente desativado (ativo=0) é tratado como logout automático."""
-        return bool(self.ativo)
+        return True
+
+    # Flask-Login 0.6.x define is_authenticated = is_active. Como sobrescrevemos
+    # is_active acima (sempre True), is_authenticated também será True para
+    # clientes logados, incluindo os inativos — o acesso é controlado pelo
+    # before_request do cliente_bp e pelo admin_required.
+    @property
+    def is_authenticated(self):
+        return True
+
+    @property
+    def is_anonymous(self):
+        return False
 
     # --- Senhas com Werkzeug ---
     def set_password(self, senha):
@@ -104,9 +119,27 @@ class Pagamento(db.Model):
     data_pagamento = db.Column(db.DateTime, nullable=True)
     valor = db.Column(db.Float, nullable=False)
     metodo_pagamento = db.Column(db.String(50), nullable=True)
+    status = db.Column(db.String(20), nullable=False, default='pendente')
+
+    @property
+    def eh_pendente(self):
+        """Pagamento ainda não confirmado/quitado."""
+        return bool(self.status) and self.status.lower() in ('pendente', 'aguardando', 'em_aberto')
+
+    @property
+    def eh_pago(self):
+        return bool(self.status) and self.status.lower() == 'pago'
+
+    @property
+    def status_exibicao(self):
+        if self.eh_pago:
+            return 'Quitado'
+        if self.eh_pendente:
+            return 'Pendente'
+        return self.status.capitalize()
 
     def __repr__(self):
-        return f'<Pagamento R${self.valor}>'
+        return f'<Pagamento R${self.valor} {self.status}>'
 
 
 class UsuarioSistema(UserMixin, db.Model):
@@ -211,6 +244,7 @@ class Video(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     titulo = db.Column(db.String(200), nullable=False)
     descricao = db.Column(db.Text, nullable=True)
+    tipo = db.Column(db.String(50), nullable=False, default='Filme')
     categoria = db.Column(db.String(50), nullable=False, default='Outro')
     caminho_arquivo = db.Column(db.String(255), nullable=True)
     capa = db.Column(db.String(255), nullable=True)
